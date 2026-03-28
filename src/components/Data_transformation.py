@@ -227,4 +227,4 @@ if __name__ == "__main__":
         data_transformation.initiate_data_transformation()
 
     except Exception as e:
-        raise CustomeException(e, sys)
+        raise CustomeException(e, sys)  

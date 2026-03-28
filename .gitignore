@@ -31,3 +31,8 @@ dist/
 # Logs
 *.log
 logs/
+
+artifacts/
+*.npy
+*.pkl
+*.model
