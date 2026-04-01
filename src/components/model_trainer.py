@@ -21,16 +21,20 @@ class  SpamDetectionModel:
 
         self.trained_model_object=trained_model_object
 
-    def predict(self,x:pd.DataFrame)->pd.DataFrame :
+    def predict(self, x):
         try:
-            logging.info("model prediction has been started")
-            transformed_feature= self.preprocessing_object.transform(x)
+            logging.info("model prediction started")
 
-            logging.info("used the trained model to get prediction")
+            # ✅ If already numpy → don't transform
+            if isinstance(x, np.ndarray):
+                return self.trained_model_object.predict(x)
 
+            # ✅ If raw text → transform
+            transformed_feature = self.preprocessing_object.transform(x)
             return self.trained_model_object.predict(transformed_feature)
+
         except Exception as e:
-            raise CustomeException(e,sys) from e
+            raise CustomeException(e, sys) from e
         
     def __repr__(self):
         return f'{type(self.trained_model_object).__name__}()'
@@ -100,23 +104,3 @@ class ModelTrainer:
         
 
 
-if __name__ == "__main__" :
-    try:
-        data_transformation=DataTransformationArtifact(
-
-            transformed_vectorizer_object_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_24_2026_17_56_33\data_transformation\transformed_object\vectorizer.pkl",
-            transformed_encoder_object_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_24_2026_17_56_33\data_transformation\transformed_object\encoder.pkl",
-            transformed_train_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_24_2026_17_56_33\data_transformation\transformed\train.npy",
-            transformed_test_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_24_2026_17_56_33\data_transformation\transformed\test.npy"
-
-        )
-        model_trainer=ModelTrainer(
-            data_transformation_artifact=data_transformation,
-            model_trainer_config=ModelTrainerConfig()
-        )
-        model_trainer.initiate_model_training()
-        
-
-    except Exception as e:
-        raise CustomeException(e,sys) from e
-    

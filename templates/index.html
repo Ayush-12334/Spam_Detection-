@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spam Detector</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>📧 Spam Detector</h2>
+
+        <!-- TRAIN BUTTON -->
+        <form action="/train" method="get">
+            <button type="submit">Train Model</button>
+        </form>
+
+        <br>
+
+        <!-- GO TO PREDICTION -->
+        <form action="/predict" method="get">
+            <button type="submit">Start Detection</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>

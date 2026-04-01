@@ -110,26 +110,3 @@ class DataValidation:
 
         except Exception as e:
             raise CustomeException(e, sys)
-if __name__ == "__main__":
-    try:
-        # 🔹 Step 1: Manually create ingestion artifact
-        data_ingestion_artifact = DataIngestionArtifact(
-            trained_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_19_2026_00_46_41\data_ingestion\ingested\train.csv",
-            test_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_19_2026_00_46_41\data_ingestion\ingested\test.csv"
-        )
-
-        # 🔹 Step 2: Create config
-        data_validation_config = DataValidationConfig()
-
-        # 🔹 Step 3: Run validation
-        data_validation = DataValidation(
-            data_validation_config=data_validation_config,
-            data_ingestion_artifact=data_ingestion_artifact
-        )
-
-        data_validation_artifact = data_validation.initiate_data_validation()
-
-        print(data_validation_artifact)
-
-    except Exception as e:
-        raise CustomeException(e, sys)

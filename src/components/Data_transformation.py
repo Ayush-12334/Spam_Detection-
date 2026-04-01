@@ -200,31 +200,3 @@ class DataTransformation:
         except Exception as e:
             raise CustomeException(e, sys) from e
 
-
-if __name__ == "__main__":
-    try:
-        data_ingestion_artifact = DataIngestionArtifact(
-            trained_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_19_2026_00_46_41\data_ingestion\ingested\train.csv",
-            test_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_19_2026_00_46_41\data_ingestion\ingested\test.csv"
-        )
-
-        # ✅ FIX 5: added missing comma between the two path arguments
-        data_validation_artifact = DataValidationArtifacts(
-            valid_train_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_20_2026_19_44_08\data_ingestion\validated\train.csv",
-            valid_test_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_20_2026_19_44_08\data_ingestion\validated\test.csv",
-            drift_report_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_20_2026_19_44_08\data_ingestion\drift_report",
-            invalid_test_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_20_2026_19_44_08\data_ingestion\invalid",
-            invalid_train_file_path=r"C:\Users\Ayush\Machine Learning projects\spam detection\src\artifacts\03_20_2026_19_44_08\data_ingestion\invalid",
-            validation_status=True
-        )
-
-        data_transformation = DataTransformation(
-            data_ingestion_artifact=data_ingestion_artifact,
-            data_validation_artifact=data_validation_artifact,
-            data_transformation_config=DataTransformationConfig()  # was missing this
-        )
-
-        data_transformation.initiate_data_transformation()
-
-    except Exception as e:
-        raise CustomeException(e, sys)  

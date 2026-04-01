@@ -2,10 +2,12 @@ import os
 from dataclasses import dataclass
 from src.constant.training_pipeline import *
 from datetime import datetime
-
+from src.constant.prediction_pipeline import PRED_SCHEMA_FILE_PATH
 TIMESTAMP: str=datetime.now().strftime("%m_%d_%Y_%H_%M_%S")
 
- 
+from pymongo import MongoClient
+from src.utils.main_utils import MainUtils
+from src.constant.s3_bucket import TRAINING_BUCKET_NAME, PREDICTION_BUCKET_NAME
 @dataclass
 class TrainingPipelineConfig:
     pipeline_name:str =PIPELINE_NAME
@@ -58,10 +60,54 @@ class ModelTrainerConfig:
 
 
 
+@dataclass
+class ModelEvaluationConfig:
+
+    changed_threshold_score:float=MODEL_EVALUATION_CHANGED_THRESHOLD_SCORE
+    model_evaluation_dir:str=os.path.join(training_pipeline_config.artifact_dir,MODEL_EVALUATION_DIR_NAME)
+    best_model_path:str=os.path.join(model_evaluation_dir,MODEL_FILE_NAME)
+
+
+# @dataclass
+# class ModelPusherConfig:
+#     bucket_name: str = MODEL_PUSHER_BUCKET_NAME
+#     s3_model_key_path: str = MODEL_FILE_NAME
+
+
+class PCAConfig:
+    def __init__(self):
+        self.n_components = 2
+        self.random_state = 42
+        
+    def get_pca_config(self):
+        return self.__dict__
+    
+class ClusteringConfig:
+    def __init__(self):
+        self.n_clusters=3
+        self.affinity='euclidean'
+        self.linkage='ward'
+    
+    def get_clustering_config(self):
+        return self.__dict__
+
+
+
+
 class SimpleImputerConfig:
     def __init__(self):
         self.strategy = "constant"
 
         self.fill_value = 0
+
+
+
+class Prediction_config:
+    def __init__(self):
+        utils = MainUtils()
+        self.prediction_schema = utils.read_yaml_file(PRED_SCHEMA_FILE_PATH)
+    def get_prediction_schema(self):
+        return self.__dict__
+    
 
 

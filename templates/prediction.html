@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prediction</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<div class="container">
+<div class="card">
+
+{% if context %}
+
+    <div class="result">
+        {% if prediction|int == 1 %}
+            <span style="color:red;">🚨 Spam Message</span>
+        {% else %}
+            <span style="color:lightgreen;">✅ Safe Message</span>
+        {% endif %}
+    </div>
+
+    <button onclick="window.location.href='/predict'">Try Again</button>
+
+{% else %}
+
+    <h2>Enter Message</h2>
+
+    <form method="POST" action="/predict">
+        <input type="text" name="input_text" placeholder="Type your message..." required>
+        <button type="submit">Predict</button>
+    </form>
+
+{% endif %}
+
+</div>
+</div>
+
+</body>
+</html>
