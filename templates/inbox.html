@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inbox — SpamGuard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">🛡</div>
+        <div class="logo-text">Spam<span>Guard</span></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Mailbox</div>
+      <a href="/" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="/predict" class="nav-item"><span class="icon">🔍</span> Scan Message</a>
+      <a href="/inbox" class="nav-item active">
+        <span class="icon">📥</span> Inbox
+        <span class="badge blue" id="inbox-badge">0</span>
+      </a>
+      <a href="/spam" class="nav-item">
+        <span class="icon">🚫</span> Spam Folder
+        <span class="badge" id="spam-badge">0</span>
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="/train" class="train-btn">⚙️ Train Model</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Inbox</div>
+        <div class="topbar-sub">Safe messages only</div>
+      </div>
+      <button class="clear-btn" onclick="clearInbox()" style="font-size:12px;padding:6px 14px;border:1px solid var(--border2);border-radius:6px;color:var(--muted2);background:transparent;cursor:pointer;">
+        Clear Inbox
+      </button>
+    </div>
+    <div class="content">
+      <div class="message-list" id="inbox-list">
+        <div class="empty-state" id="empty-inbox">📥 No safe messages yet — scan a message to get started</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function escHtml(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function render() {
+    const msgs  = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+    const safe  = msgs.filter(m => m.type === 'safe');
+    const spam  = msgs.filter(m => m.type === 'spam');
+    document.getElementById('inbox-badge').textContent = safe.length || '';
+    document.getElementById('spam-badge').textContent  = spam.length || '';
+
+    const list  = document.getElementById('inbox-list');
+    const empty = document.getElementById('empty-inbox');
+
+    if (safe.length === 0) { empty.style.display = 'block'; list.innerHTML = ''; return; }
+    empty.style.display = 'none';
+
+    list.innerHTML = safe.map((m, i) => `
+      <div class="message-item safe-item">
+        <span class="msg-icon">✅</span>
+        <div class="msg-body">
+          <div class="msg-text">${escHtml(m.text)}</div>
+          <div class="msg-meta">${m.time} · Safe</div>
+        </div>
+        <span class="msg-badge safe">SAFE</span>
+      </div>
+    `).join('');
+  }
+
+  function clearInbox() {
+    const msgs = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+    localStorage.setItem('sg_messages', JSON.stringify(msgs.filter(m => m.type === 'spam')));
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>

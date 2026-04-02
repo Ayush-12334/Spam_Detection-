@@ -12,7 +12,7 @@ load_dotenv()
 
 from src.pipeline.prediction_pipeline import PredictionPipeline
 from src.pipeline.train_pipeline import TrainPipeline
-from src.constant.application import *
+from src.constant.application import APP_HOST, APP_PORT
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -20,11 +20,8 @@ warnings.filterwarnings('ignore')
 app = FastAPI()
 
 templates = Jinja2Templates(directory='templates')
-
-# Static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -33,9 +30,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# =========================
-# FORM CLASS
-# =========================
+# ✅ ===== DYNAMIC MODEL LOADING =====
+ARTIFACTS_DIR = os.path.join("src", "artifacts")
+def get_latest_paths():
+    folders = [
+        f for f in os.listdir(ARTIFACTS_DIR)
+        if os.path.isdir(os.path.join(ARTIFACTS_DIR, f))
+    ]
+
+    if not folders:
+        raise Exception("No training folders found!")
+
+    latest_folder = sorted(folders)[-1]
+    base_path = os.path.join(ARTIFACTS_DIR, latest_folder)
+
+    # ✅ CORRECT PATHS (BASED ON YOUR STRUCTURE)
+    model_path = os.path.join(
+        base_path, "model_evaluation", "best_model.pkl"
+    )
+
+    vectorizer_path = os.path.join(
+        base_path, "data_transformation", "transformed_object", "vectorizer.pkl"
+    )
+
+    # 🔍 DEBUG
+    print("\n===== FINAL PATH DEBUG =====")
+    print("Model path:", model_path)
+    print("Vectorizer path:", vectorizer_path)
+    print("Model exists:", os.path.exists(model_path))
+    print("Vectorizer exists:", os.path.exists(vectorizer_path))
+    print("===========================\n")
+
+    return model_path, vectorizer_path, base_path
+
 class DataForm:
     def __init__(self, request: Request):
         self.request: Request = request
@@ -46,75 +73,80 @@ class DataForm:
         self.text = form.get('input_text')
 
 
-# =========================
-# TRAIN ROUTE
-# =========================
+# ── Home ─────────────────────────
+@app.get("/")
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+# ── Train ────────────────────────
 @app.get("/train")
-async def train_model():
+async def train_model(request: Request):
     try:
         pipeline = TrainPipeline()
         pipeline.run_pipeline()
-        return Response("✅ Training successful!")
+        return templates.TemplateResponse(
+            "index.html",
+            {"request": request, "train_msg": "Training completed successfully!"}
+        )
     except Exception as e:
-        return Response(f"❌ Error: {e}")
+        return Response(f"Training error: {e}", status_code=500)
 
 
-# =========================
-# HOME PAGE
-# =========================
-@app.get("/")
-async def home(request: Request):
-    return templates.TemplateResponse(
-        "index.html",
-        {"request": request}
-    )
-
-
-# =========================
-# PREDICT PAGE (GET)
-# =========================
+# ── Predict Page ─────────────────
 @app.get("/predict")
 async def predict_page(request: Request):
     return templates.TemplateResponse(
         "prediction.html",
-        {"request": request, "context": False}
+        {"request": request, "context": False, "scanned_text": ""}
     )
 
 
-# =========================
-# PREDICTION (POST)
-# =========================
+# ── Predict API ──────────────────
 @app.post("/predict")
 async def predict(request: Request):
     try:
         form = DataForm(request)
         await form.get_text_data()
 
-        input_data = [form.text]
+        input_text = form.text or ""
 
-        model_path = os.path.join("artifacts", "model.pkl")
+        # ✅ Get latest model paths
+        model_path, vectorizer_path, base_path = get_latest_paths()
 
-        if not os.path.exists(model_path):
+        # ❌ If files missing
+        if not os.path.exists(model_path) or not os.path.exists(vectorizer_path):
             return templates.TemplateResponse(
                 "prediction.html",
                 {
                     "request": request,
                     "context": True,
-                    "prediction": "⚠️ Train model first!"
+                    "prediction": "⚠️ Model or Vectorizer not found. Train again.",
+                    "scanned_text": input_text,
                 }
             )
 
-        prediction_pipeline = PredictionPipeline()
-        prediction = prediction_pipeline.run_pipeline(input_data=input_data)
+        pipeline = PredictionPipeline(
+            model_path=model_path,
+            vectorizer_path=vectorizer_path
+        )
+
+        prediction = pipeline.run_pipeline(input_text)
+
+        # 🔍 DEBUG OUTPUT
+        print("RAW PREDICTION:", prediction)
 
         result = int(prediction[0])
+
+        print("FINAL RESULT:", result)
 
         return templates.TemplateResponse(
             "prediction.html",
             {
                 "request": request,
                 "context": True,
-                "prediction": result
+                "prediction": result,
+                "scanned_text": input_text,
             }
         )
 
@@ -124,13 +156,12 @@ async def predict(request: Request):
             {
                 "request": request,
                 "context": True,
-                "prediction": f"❌ Error: {str(e)}"
+                "prediction": f"❌ Error: {str(e)}",
+                "scanned_text": "",
             }
         )
 
 
-# =========================
-# RUN APP
-# =========================
+# ── Run ─────────────────────────
 if __name__ == "__main__":
     app_run(app, host=APP_HOST, port=APP_PORT)

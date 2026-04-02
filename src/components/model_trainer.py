@@ -11,7 +11,7 @@ from src.exception import CustomeException
 from src.logger import logging
 from src.utils.main_utils import MainUtils,load_numpy_array_data
 from neuro_mf  import ModelFactory
-
+from scipy.sparse import csr_matrix
 
 class  SpamDetectionModel:
     def __init__(self,preprocessing_object:object,encoder_object:object,trained_model_object:object):
@@ -20,13 +20,14 @@ class  SpamDetectionModel:
 
 
         self.trained_model_object=trained_model_object
+  
 
     def predict(self, x):
         try:
             logging.info("model prediction started")
 
-            # ✅ If already numpy → don't transform
-            if isinstance(x, np.ndarray):
+            # ✅ If already transformed (numpy or sparse) → skip preprocessing
+            if isinstance(x, (np.ndarray, csr_matrix)):
                 return self.trained_model_object.predict(x)
 
             # ✅ If raw text → transform
@@ -35,7 +36,7 @@ class  SpamDetectionModel:
 
         except Exception as e:
             raise CustomeException(e, sys) from e
-        
+ 
     def __repr__(self):
         return f'{type(self.trained_model_object).__name__}()'
     def __str__(self):

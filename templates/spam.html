@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spam Folder — SpamGuard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">🛡</div>
+        <div class="logo-text">Spam<span>Guard</span></div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Mailbox</div>
+      <a href="/" class="nav-item"><span class="icon">🏠</span> Dashboard</a>
+      <a href="/predict" class="nav-item"><span class="icon">🔍</span> Scan Message</a>
+      <a href="/inbox" class="nav-item">
+        <span class="icon">📥</span> Inbox
+        <span class="badge blue" id="inbox-badge">0</span>
+      </a>
+      <a href="/spam" class="nav-item active">
+        <span class="icon">🚫</span> Spam Folder
+        <span class="badge" id="spam-badge">0</span>
+      </a>
+    </nav>
+    <div class="sidebar-bottom">
+      <a href="/train" class="train-btn">⚙️ Train Model</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Spam Folder</div>
+        <div class="topbar-sub">Detected spam messages</div>
+      </div>
+      <button onclick="clearSpam()" style="font-size:12px;padding:6px 14px;border:1px solid rgba(239,68,68,0.3);border-radius:6px;color:#f87171;background:rgba(239,68,68,0.08);cursor:pointer;font-family:var(--sans);">
+        Empty Spam
+      </button>
+    </div>
+    <div class="content">
+      <div class="message-list" id="spam-list">
+        <div class="empty-state" id="empty-spam">🚫 Spam folder is empty — no spam detected yet</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  function escHtml(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function render() {
+    const msgs  = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+    const spam  = msgs.filter(m => m.type === 'spam');
+    const safe  = msgs.filter(m => m.type === 'safe');
+    document.getElementById('spam-badge').textContent  = spam.length || '';
+    document.getElementById('inbox-badge').textContent = safe.length || '';
+
+    const list  = document.getElementById('spam-list');
+    const empty = document.getElementById('empty-spam');
+
+    if (spam.length === 0) { empty.style.display = 'block'; list.innerHTML = ''; return; }
+    empty.style.display = 'none';
+
+    list.innerHTML = spam.map((m, i) => `
+      <div class="message-item spam-item">
+        <span class="msg-icon">🚨</span>
+        <div class="msg-body">
+          <div class="msg-text">${escHtml(m.text)}</div>
+          <div class="msg-meta">${m.time} · Spam detected</div>
+        </div>
+        <span class="msg-badge spam">SPAM</span>
+      </div>
+    `).join('');
+  }
+
+  function clearSpam() {
+    const msgs = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+    localStorage.setItem('sg_messages', JSON.stringify(msgs.filter(m => m.type === 'safe')));
+    render();
+  }
+
+  render();
+</script>
+</body>
+</html>

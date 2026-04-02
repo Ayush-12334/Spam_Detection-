@@ -1,39 +1,234 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Prediction</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan Message — SpamGuard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
-<div class="container">
-<div class="card">
+<div class="app">
 
-{% if context %}
-
-    <div class="result">
-        {% if prediction|int == 1 %}
-            <span style="color:red;">🚨 Spam Message</span>
-        {% else %}
-            <span style="color:lightgreen;">✅ Safe Message</span>
-        {% endif %}
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">🛡</div>
+        <div class="logo-text">Spam<span>Guard</span></div>
+      </div>
     </div>
 
-    <button onclick="window.location.href='/predict'">Try Again</button>
+    <nav class="sidebar-nav">
+      <div class="nav-label">Mailbox</div>
+      <a href="/" class="nav-item">
+        <span class="icon">🏠</span> Dashboard
+      </a>
+      <a href="/predict" class="nav-item active">
+        <span class="icon">🔍</span> Scan Message
+      </a>
+      <a href="/inbox" class="nav-item">
+        <span class="icon">📥</span> Inbox
+        <span class="badge blue" id="inbox-badge">0</span>
+      </a>
+      <a href="/spam" class="nav-item">
+        <span class="icon">🚫</span> Spam Folder
+        <span class="badge" id="spam-badge">0</span>
+      </a>
+    </nav>
 
-{% else %}
+    <div class="sidebar-bottom">
+      <a href="/train" class="train-btn">⚙️ Train Model</a>
+    </div>
+  </aside>
 
-    <h2>Enter Message</h2>
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Scan Message</div>
+        <div class="topbar-sub">ML-powered spam classification</div>
+      </div>
+      <div style="font-size:12px; color:var(--muted); font-family:var(--mono);">
+        <span class="status-dot"></span>Model ready
+      </div>
+    </div>
 
-    <form method="POST" action="/predict">
-        <input type="text" name="input_text" placeholder="Type your message..." required>
-        <button type="submit">Predict</button>
-    </form>
+    <div class="content">
 
-{% endif %}
+      <!-- Result banner (shown after prediction) -->
+      {% if context %}
+        {% if prediction is string %}
+          <!-- Error / warning state -->
+          <div class="result-banner" style="background:#1a1200; border:1px solid rgba(250,204,21,0.3);">
+            <div class="result-icon">⚠️</div>
+            <div class="result-text">
+              <h3 style="color:#fbbf24;">{{ prediction }}</h3>
+              <p>Check model path or train the model first</p>
+            </div>
+            <a href="/predict" class="result-action" style="background:rgba(250,204,21,0.1);color:#fbbf24;border:1px solid rgba(250,204,21,0.3);">
+              Try Again
+            </a>
+          </div>
+        {% elif prediction|int == 1 %}
+          <div class="result-banner spam" id="result-banner" data-type="spam" data-text="{{ scanned_text }}">
+            <div class="result-icon">🚨</div>
+            <div class="result-text">
+              <h3>Spam Detected</h3>
+              <p>This message has been moved to your Spam Folder</p>
+            </div>
+            <a href="/spam" class="result-action">View Spam Folder →</a>
+          </div>
+        {% else %}
+          <div class="result-banner safe" id="result-banner" data-type="safe" data-text="{{ scanned_text }}">
+            <div class="result-icon">✅</div>
+            <div class="result-text">
+              <h3>Safe Message</h3>
+              <p>This message has been delivered to your Inbox</p>
+            </div>
+            <a href="/inbox" class="result-action">View Inbox →</a>
+          </div>
+        {% endif %}
+      {% endif %}
 
+      <!-- Compose / scan card -->
+      <div class="compose-card">
+        <div class="compose-header">
+          <div class="dot"></div>
+          New Message Scan
+        </div>
+
+        <form method="POST" action="/predict" id="scan-form">
+          <div class="compose-body">
+            <div class="field-row">
+              <span class="field-label">FROM</span>
+              <input class="field-input" type="text" placeholder="sender@example.com" disabled
+                     style="color:var(--muted);" value="unknown@sender.com">
+            </div>
+            <div class="field-row">
+              <span class="field-label">TO</span>
+              <input class="field-input" type="text" placeholder="you@inbox.com" disabled
+                     style="color:var(--muted);" value="you@inbox.com">
+            </div>
+            <div class="field-row" style="align-items:flex-start; padding-top:14px;">
+              <span class="field-label" style="margin-top:4px;">MSG</span>
+              <textarea
+                class="message-area"
+                name="input_text"
+                id="msg-input"
+                placeholder="Paste or type the message you want to scan..."
+                required
+                oninput="updateCount(this)"
+              >{% if context and scanned_text %}{{ scanned_text }}{% endif %}</textarea>
+            </div>
+          </div>
+
+          <div class="compose-footer">
+            <button type="submit" class="scan-btn" id="scan-btn">
+              <span>🔍</span> Scan Message
+            </button>
+            <span class="char-count" id="char-count">0 chars</span>
+          </div>
+        </form>
+      </div>
+
+      <!-- Recent scans preview -->
+      <div>
+        <div class="section-header">
+          <span class="section-title">Recent Scans</span>
+          <button class="clear-btn" onclick="clearRecent()">Clear</button>
+        </div>
+        <div class="message-list" id="recent-list">
+          <div class="empty-state" id="empty-recent">No messages scanned yet</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
 </div>
-</div>
+
+<script>
+  // ── Badge counts ─────────────────────────────────
+  function loadBadges() {
+    const msgs = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+    const spamCount  = msgs.filter(m => m.type === 'spam').length;
+    const safeCount  = msgs.filter(m => m.type === 'safe').length;
+    document.getElementById('spam-badge').textContent  = spamCount  || '';
+    document.getElementById('inbox-badge').textContent = safeCount  || '';
+  }
+
+  // ── Save result to localStorage ───────────────────
+  const banner = document.getElementById('result-banner');
+  if (banner) {
+    const type = banner.dataset.type;
+    const text = banner.dataset.text;
+    if (text) {
+      const msgs = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+      msgs.unshift({
+        type,
+        text,
+        time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+      });
+      localStorage.setItem('sg_messages', JSON.stringify(msgs.slice(0, 50)));
+    }
+  }
+
+  // ── Render recent list ────────────────────────────
+  function renderRecent() {
+    const msgs = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+    const list = document.getElementById('recent-list');
+    const empty = document.getElementById('empty-recent');
+
+    if (msgs.length === 0) {
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    const recent = msgs.slice(0, 5);
+    list.innerHTML = recent.map(m => `
+      <div class="message-item ${m.type === 'spam' ? 'spam-item' : 'safe-item'}">
+        <span class="msg-icon">${m.type === 'spam' ? '🚨' : '✅'}</span>
+        <div class="msg-body">
+          <div class="msg-text">${escHtml(m.text)}</div>
+          <div class="msg-meta">${m.time}</div>
+        </div>
+        <span class="msg-badge ${m.type === 'spam' ? 'spam' : 'safe'}">
+          ${m.type === 'spam' ? 'SPAM' : 'SAFE'}
+        </span>
+      </div>
+    `).join('');
+  }
+
+  function clearRecent() {
+    localStorage.removeItem('sg_messages');
+    renderRecent();
+    loadBadges();
+  }
+
+  function escHtml(t) {
+    return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Char count ────────────────────────────────────
+  function updateCount(el) {
+    document.getElementById('char-count').textContent = el.value.length + ' chars';
+  }
+
+  // Init char count if text already in box (after result)
+  const msgInput = document.getElementById('msg-input');
+  if (msgInput && msgInput.value) updateCount(msgInput);
+
+  // ── Scan button loading state ─────────────────────
+  document.getElementById('scan-form').addEventListener('submit', function() {
+    const btn = document.getElementById('scan-btn');
+    btn.innerHTML = '<div class="spinner"></div> Scanning...';
+    btn.disabled = true;
+  });
+
+  loadBadges();
+  renderRecent();
+</script>
 
 </body>
 </html>

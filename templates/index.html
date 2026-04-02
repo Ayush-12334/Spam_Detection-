@@ -1,28 +1,97 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Spam Detector</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpamGuard — AI Spam Detector</title>
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
-<div class="container">
-    <div class="card">
-        <h2>📧 Spam Detector</h2>
+<div class="app">
 
-        <!-- TRAIN BUTTON -->
-        <form action="/train" method="get">
-            <button type="submit">Train Model</button>
-        </form>
-
-        <br>
-
-        <!-- GO TO PREDICTION -->
-        <form action="/predict" method="get">
-            <button type="submit">Start Detection</button>
-        </form>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon">🛡</div>
+        <div class="logo-text">Spam<span>Guard</span></div>
+      </div>
     </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Mailbox</div>
+      <a href="/" class="nav-item active">
+        <span class="icon">🏠</span> Dashboard
+      </a>
+      <a href="/predict" class="nav-item">
+        <span class="icon">🔍</span> Scan Message
+      </a>
+      <a href="/inbox" class="nav-item">
+        <span class="icon">📥</span> Inbox
+      </a>
+      <a href="/spam" class="nav-item">
+        <span class="icon">🚫</span> Spam Folder
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <a href="/train" class="train-btn">⚙️ Train Model</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title">Dashboard</div>
+        <div class="topbar-sub">SpamGuard ML · v1.0</div>
+      </div>
+      <div style="font-size:12px; color:var(--muted); font-family:var(--mono);">
+        <span class="status-dot"></span>Model ready
+      </div>
+    </div>
+
+    <div class="index-main">
+      <div class="hero-card">
+        <span class="hero-icon">🛡️</span>
+        <h1 class="hero-title">AI <span>Spam</span> Detector</h1>
+        <p class="hero-sub">
+          Paste any message and our ML model will instantly classify it
+          as spam or legitimate — powered by your trained model.
+        </p>
+
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="stat-num" id="total-count">0</div>
+            <div class="stat-label">Scanned</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="spam-count" style="color:#f87171">0</div>
+            <div class="stat-label">Spam</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-num" id="safe-count" style="color:#4ade80">0</div>
+            <div class="stat-label">Safe</div>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <a href="/predict" class="btn-primary">🔍 Scan a Message</a>
+          <a href="/train" class="btn-secondary">⚙️ Train Model</a>
+        </div>
+      </div>
+    </div>
+  </main>
 </div>
+
+<script>
+  // Load stats from localStorage
+  const msgs = JSON.parse(localStorage.getItem('sg_messages') || '[]');
+  document.getElementById('total-count').textContent = msgs.length;
+  document.getElementById('spam-count').textContent  = msgs.filter(m => m.type === 'spam').length;
+  document.getElementById('safe-count').textContent  = msgs.filter(m => m.type === 'safe').length;
+</script>
 
 </body>
 </html>
