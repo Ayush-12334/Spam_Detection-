@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import HTMLResponse, Response
 from uvicorn import run as app_run
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -161,6 +161,15 @@ async def predict(request: Request):
             }
         )
 
+
+@app.get("/inbox", response_class=HTMLResponse)
+async def inbox_page(request: Request):
+    return templates.TemplateResponse("inbox.html", {"request": request})
+
+
+@app.get("/spam", response_class=HTMLResponse)
+async def spam_page(request: Request):
+    return templates.TemplateResponse("spam.html", {"request": request})
 
 # ── Run ─────────────────────────
 if __name__ == "__main__":
